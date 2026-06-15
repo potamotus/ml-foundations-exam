@@ -81,11 +81,14 @@ def main():
         html = fh.read()
     with open(MATHJAX, encoding='utf-8') as fh:
         mj = fh.read()
+    with open(os.path.join(BASE, 'figures.js'), encoding='utf-8') as fh:
+        figs = fh.read()
 
     topics_js = json.dumps(topics_meta, ensure_ascii=False)
     data_js = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')  # avoid premature </script>
 
     html = html.replace('/*__MATHJAX__*/', mj)
+    html = html.replace('/*__FIGS__*/', figs)
     html = html.replace('/*__TOPICS__*/', topics_js)
     html = html.replace('/*__DATA__*/', data_js)
 

@@ -118,6 +118,11 @@
   .cheat .vr b{color:#c6cfde;font-weight:600}
   .cheat .wh{display:block;color:#8b94a3;font-size:12px;font-style:italic;margin-top:6px}
   .secthead{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:18px 0 8px;font-weight:600}
+  .fig{margin:14px 0;background:#0f1219;border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;text-align:center}
+  .fig svg{max-width:100%;height:auto}
+  .fig .cap{font-size:12.5px;color:#9aa4b2;margin-top:8px;text-align:left;line-height:1.5}
+  .thref{display:inline-block;margin-top:10px;color:var(--acc);cursor:pointer;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:4px 11px;text-decoration:none;background:var(--panel2)}
+  .thref:hover{border-color:var(--acc);background:#1c2435}
   mjx-container{overflow-x:auto;overflow-y:hidden;max-width:100%}
   @media(max-width:600px){
     .fx{font-size:13.5px}
@@ -136,6 +141,7 @@ window.MathJax = {
 };
 </script>
 <script>/*__MATHJAX__*/</script>
+<script>/*__FIGS__*/</script>
 </head>
 <body>
 <header><div class="wrap">
@@ -164,12 +170,13 @@ let openRate = LS.get('mltrain_open',{});   // {topic:{i:rating}}
 const saveView = ()=>LS.set('mltrain_view',{topic:state.topic,mode:state.mode});
 let scrollMem = LS.get('mltrain_scroll',{});       // {"topic|mode": scrollY}
 let _restoreAfterTypeset = false;
+let _gotoCard = null;
 function viewKey(){ return state.topic+'|'+state.mode; }
 function saveScroll(){ scrollMem[viewKey()] = window.scrollY; LS.set('mltrain_scroll',scrollMem); }
 function restoreScroll(){ window.scrollTo(0, scrollMem[viewKey()]||0); }
 let _scrollT; window.addEventListener('scroll', ()=>{ clearTimeout(_scrollT); _scrollT=setTimeout(saveScroll,150); });
 
-function typeset(){ if(window.MathJax && MathJax.typesetPromise){ MathJax.typesetClear && MathJax.typesetClear([document.getElementById('content')]); MathJax.typesetPromise([document.getElementById('content')]).then(()=>{ if(_restoreAfterTypeset){ restoreScroll(); _restoreAfterTypeset=false; } }).catch(()=>{}); } }
+function typeset(){ if(window.MathJax && MathJax.typesetPromise){ MathJax.typesetClear && MathJax.typesetClear([document.getElementById('content')]); MathJax.typesetPromise([document.getElementById('content')]).then(()=>{ if(_gotoCard!=null){ scrollToCard(_gotoCard); _gotoCard=null; } else if(_restoreAfterTypeset){ restoreScroll(); _restoreAfterTypeset=false; } }).catch(()=>{}); } }
 
 function renderTopics(){
   document.getElementById('topicbar').innerHTML = TOPICS.map(t=>
@@ -180,6 +187,9 @@ function renderTopics(){
 }
 function setTopic(id){ saveScroll(); state.topic=id; saveView(); renderTopics(); _restoreAfterTypeset=true; render(); restoreScroll(); }
 function setMode(m){ saveScroll(); state.mode=m; saveView(); renderTopics(); _restoreAfterTypeset=true; render(); restoreScroll(); }
+function scrollToCard(i){ const el=document.getElementById('card'+i); if(el){ el.classList.add('open'); const y=el.getBoundingClientRect().top+window.scrollY-72; window.scrollTo(0,Math.max(0,y)); } }
+function gotoTheory(i){ saveScroll(); state.mode='theory'; saveView(); renderTopics(); _restoreAfterTypeset=false; _gotoCard=i; render(); scrollToCard(i); }
+function thref(ref){ if(ref==null) return ''; const th=DATA[state.topic].theory; if(!(ref>=0&&ref<th.length)) return ''; return `<a class="thref" href="#" onclick="gotoTheory(${ref});return false;">📖 К теории: «${th[ref].ttl}»</a>`; }
 
 function uniqCats(arr){ const s=[]; arr.forEach(x=>{ if(x.cat && !s.includes(x.cat)) s.push(x.cat); }); return s; }
 
@@ -195,7 +205,7 @@ function render(){
     html += d.theory.map((t,i)=>`
       <div class="card" id="card${i}">
         <div class="head" onclick="toggleCard(${i})"><span class="ttl">${i+1}. ${t.ttl}</span><span class="arrow">▶</span></div>
-        <div class="body">${t.body}</div>
+        <div class="body">${injectFigs(t.body)}</div>
       </div>`).join('');
   }
   else if(state.mode==='quiz'){ html += quizView(d); }
@@ -232,7 +242,7 @@ function quizHTML(q,i,pos){
   }).join('');
   const badge = q.cat?`<span class="catbadge">${q.cat}</span>`:'';
   return `<div class="q" id="q${i}"><div class="qt"><span class="num">${pos+1}.</span>${q.q}${badge}</div>
-    ${opts}<div class="explain ${answered?'show':''}">${q.e?('<b>Пояснение.</b> '+q.e):''}</div></div>`;
+    ${opts}<div class="explain ${answered?'show':''}">${q.e?('<b>Пояснение.</b> '+q.e):''}${thref(q.ref)}</div></div>`;
 }
 function answer(i,j){ if(!quizAns[state.topic]) quizAns[state.topic]={}; quizAns[state.topic][i]=j; LS.set('mltrain_quiz',quizAns); render(); }
 function resetQuiz(){ quizAns[state.topic]={}; LS.set('mltrain_quiz',quizAns); render(); }
@@ -274,7 +284,7 @@ function openHTML(q,i,pos){
   return `<div class="oq" id="oq${i}">
     <div class="ot"><span class="num">${pos+1}.</span><span class="ask">${q.q}</span>${badge}${rb}</div>
     <button class="btn sec" onclick="toggleAns(${i})">Показать эталон</button>
-    <div class="ans" id="ans${i}"><div class="alabel">Эталонный ответ</div>${q.a}${cl}
+    <div class="ans" id="ans${i}"><div class="alabel">Эталонный ответ</div>${q.a}${cl}${thref(q.ref)}
       <div class="rate">${[0,1,2].map(k=>`<button class="r${k} ${r===k?'on':''}" onclick="rateOpen(${i},${k})">${RATE_LBL[k]}</button>`).join('')}</div>
     </div></div>`;
 }

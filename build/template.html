@@ -162,8 +162,14 @@ if(!DATA[state.topic]) state.topic = TOPICS[0].id;
 let quizAns = LS.get('mltrain_quiz',{});   // {topic:{i:chosen}}
 let openRate = LS.get('mltrain_open',{});   // {topic:{i:rating}}
 const saveView = ()=>LS.set('mltrain_view',{topic:state.topic,mode:state.mode});
+let scrollMem = LS.get('mltrain_scroll',{});       // {"topic|mode": scrollY}
+let _restoreAfterTypeset = false;
+function viewKey(){ return state.topic+'|'+state.mode; }
+function saveScroll(){ scrollMem[viewKey()] = window.scrollY; LS.set('mltrain_scroll',scrollMem); }
+function restoreScroll(){ window.scrollTo(0, scrollMem[viewKey()]||0); }
+let _scrollT; window.addEventListener('scroll', ()=>{ clearTimeout(_scrollT); _scrollT=setTimeout(saveScroll,150); });
 
-function typeset(){ if(window.MathJax && MathJax.typesetPromise){ MathJax.typesetClear && MathJax.typesetClear([document.getElementById('content')]); MathJax.typesetPromise([document.getElementById('content')]).catch(()=>{}); } }
+function typeset(){ if(window.MathJax && MathJax.typesetPromise){ MathJax.typesetClear && MathJax.typesetClear([document.getElementById('content')]); MathJax.typesetPromise([document.getElementById('content')]).then(()=>{ if(_restoreAfterTypeset){ restoreScroll(); _restoreAfterTypeset=false; } }).catch(()=>{}); } }
 
 function renderTopics(){
   document.getElementById('topicbar').innerHTML = TOPICS.map(t=>
@@ -172,8 +178,8 @@ function renderTopics(){
   document.getElementById('modes').innerHTML = MODES.map(m=>
     `<button class="${m[0]===state.mode?'active':''}" onclick="setMode('${m[0]}')">${m[1]}</button>`).join('');
 }
-function setTopic(id){ state.topic=id; saveView(); renderTopics(); render(); window.scrollTo(0,0); }
-function setMode(m){ state.mode=m; saveView(); renderTopics(); render(); window.scrollTo(0,0); }
+function setTopic(id){ saveScroll(); state.topic=id; saveView(); renderTopics(); _restoreAfterTypeset=true; render(); restoreScroll(); }
+function setMode(m){ saveScroll(); state.mode=m; saveView(); renderTopics(); _restoreAfterTypeset=true; render(); restoreScroll(); }
 
 function uniqCats(arr){ const s=[]; arr.forEach(x=>{ if(x.cat && !s.includes(x.cat)) s.push(x.cat); }); return s; }
 
@@ -301,6 +307,7 @@ function cheatRow(x){
 }
 
 renderTopics();
+_restoreAfterTypeset=true;
 render();
 </script>
 </body>

@@ -26,7 +26,8 @@
   .topicbar button .d{color:var(--muted);font-size:11px;display:block;max-width:200px}
   .topicbar button:hover{border-color:var(--acc)}
   .topicbar button.active{border-color:var(--acc);background:linear-gradient(180deg,#1c2435,#171a23);box-shadow:0 0 0 1px var(--acc) inset}
-  .modes{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+  .modebar{position:sticky;top:0;z-index:30;background:rgba(15,17,23,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:8px 0}
+  .modes{display:flex;gap:6px;flex-wrap:wrap}
   .modes button{background:var(--chip);border:1px solid var(--line);color:var(--muted);border-radius:20px;
        padding:7px 14px;cursor:pointer;font-size:13px;transition:.15s}
   .modes button.active{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
@@ -141,8 +142,8 @@ window.MathJax = {
   <h1>Машинное обучение — тренажёр <span class="sub">· подготовка к теоретическому экзамену (ОМО, ВШЭ)</span></h1>
   <div class="sub" id="hint">Теория с объяснениями · тесты · разбор формул (открытые вопросы как в КР) · шпаргалка. Прогресс сохраняется локально в браузере.</div>
   <div class="topicbar" id="topicbar"></div>
-  <div class="modes" id="modes"></div>
 </div></header>
+<div class="modebar"><div class="wrap"><div class="modes" id="modes"></div></div></div>
 <main><div class="wrap" id="content"></div></main>
 <div class="scorebar" id="scorebar" style="display:none"><div class="inner" id="scoreinner"></div></div>
 

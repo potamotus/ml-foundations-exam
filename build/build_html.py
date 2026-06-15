@@ -32,8 +32,13 @@ REQ = ['intro', 'theory', 'quiz', 'open', 'cheat']
 def latex_balance_warns(topic_id, obj):
     """Collect strings, check \\( \\) pairing and $$ evenness and brace balance."""
     warns = []
-    blob = json.dumps(obj, ensure_ascii=False)
-    op = len(re.findall(r'\\\(', blob)); cl = len(re.findall(r'\\\)', blob))
+    def _walk(o):
+        if isinstance(o, str): return o + '\n'
+        if isinstance(o, list): return ''.join(_walk(x) for x in o)
+        if isinstance(o, dict): return ''.join(_walk(v) for v in o.values())
+        return ''
+    blob = _walk(obj)  # decoded strings (not json-escaped), so cases row-sep \\ isn't miscounted
+    op = len(re.findall(r'(?<!\\)\\\(', blob)); cl = len(re.findall(r'(?<!\\)\\\)', blob))
     if op != cl:
         warns.append(f'{topic_id}: \\( = {op} но \\) = {cl} (несбалансированы inline-формулы)')
     dd = blob.count('$$')

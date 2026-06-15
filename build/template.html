@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Машинное обучение — Тренажёр (теория к экзамену)</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1e222e; --line:#2a2f3d;
+    --txt:#e6e8ee; --muted:#9aa3b2; --acc:#5b8cff; --acc2:#3a6bf0;
+    --ok:#3fbf7f; --okbg:#16341f; --err:#ff6b6b; --errbg:#3a1c1c;
+    --warn:#f0b429; --chip:#242a38; --formula:#10131b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--txt);line-height:1.55;font-size:16px}
+  a{color:var(--acc)}
+  header{background:var(--bg);border-bottom:1px solid var(--line);padding:12px 18px}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+  h1{font-size:18px;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:13px}
+  .topicbar{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+  .topicbar button{background:var(--panel);color:var(--txt);border:1px solid var(--line);
+       border-radius:9px;padding:7px 11px;cursor:pointer;font-size:13px;text-align:left;transition:.15s}
+  .topicbar button .t{font-weight:600;display:block}
+  .topicbar button .d{color:var(--muted);font-size:11px;display:block;max-width:200px}
+  .topicbar button:hover{border-color:var(--acc)}
+  .topicbar button.active{border-color:var(--acc);background:linear-gradient(180deg,#1c2435,#171a23);box-shadow:0 0 0 1px var(--acc) inset}
+  .modes{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+  .modes button{background:var(--chip);border:1px solid var(--line);color:var(--muted);border-radius:20px;
+       padding:7px 14px;cursor:pointer;font-size:13px;transition:.15s}
+  .modes button.active{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+  main{padding:20px 0 90px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin:0 0 12px;overflow:hidden}
+  .card>.head{padding:13px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .card>.head:hover{background:var(--panel2)}
+  .card>.head .ttl{font-weight:600;font-size:15px}
+  .card>.head .arrow{color:var(--muted);transition:.2s;flex-shrink:0}
+  .card.open>.head .arrow{transform:rotate(90deg)}
+  .card .body{padding:0 16px;max-height:0;overflow:hidden;transition:max-height .35s ease;border-top:0 solid var(--line)}
+  .card.open .body{max-height:20000px;padding:4px 16px 18px;border-top:1px solid var(--line)}
+  .body p{margin:10px 0}
+  .body ul,.body ol{margin:8px 0;padding-left:22px}
+  .body li{margin:4px 0}
+  .fx{background:var(--formula);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:8px;
+      padding:8px 13px;margin:12px 0;font-size:15px;overflow-x:auto}
+  .fx .lbl{color:var(--muted);font-size:12px;white-space:normal;margin-top:4px}
+  .note{background:#1b2030;border-radius:8px;padding:9px 12px;font-size:13.5px;color:#c6cfde;margin:10px 0;border-left:3px solid var(--warn)}
+  .note.tip{border-left-color:var(--ok)}
+  table.cmp{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  table.cmp th,table.cmp td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  table.cmp th{background:var(--panel2);color:#cfd6e4}
+  sup,sub{font-size:.72em}
+  .muted{color:var(--muted)}
+  .intro{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:16px;color:#cfd6e4;font-size:14px}
+  .intro b{color:var(--txt)}
+  .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .btn{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:600;margin:4px 6px 0 0}
+  .btn.sec{background:var(--chip);color:var(--txt);border:1px solid var(--line);font-weight:500}
+  .btn:hover{filter:brightness(1.08)}
+  /* фильтры */
+  .filterbar{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+  .chip{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:20px;padding:6px 13px;cursor:pointer;font-size:13px;transition:.12s}
+  .chip:hover{border-color:var(--acc)}
+  .chip.on{background:linear-gradient(180deg,#1c2435,#171a23);border-color:var(--acc);color:#fff;box-shadow:0 0 0 1px var(--acc) inset}
+  .qhint{color:var(--muted);font-size:13px;margin:0 0 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .catbadge{display:inline-block;background:var(--chip);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-size:11px;font-weight:500;white-space:nowrap;vertical-align:middle;margin-left:6px}
+  /* quiz */
+  .q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .q .qt{font-weight:600;margin-bottom:12px}
+  .q .qt .num{color:var(--acc);margin-right:6px}
+  .opt{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+       border-radius:10px;padding:11px 13px;margin:7px 0;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--acc)}
+  .opt .optl{color:var(--muted);font-weight:700;margin-right:7px}
+  .opt.correct{background:var(--okbg);border-color:var(--ok)}
+  .opt.correct .optl{color:var(--ok)}
+  .opt.wrong .optl{color:var(--err)}
+  .opt.wrong{background:var(--errbg);border-color:var(--err)}
+  .opt.disabled{cursor:default;opacity:.92}
+  .explain{margin-top:10px;font-size:13.5px;background:var(--formula);border-radius:9px;padding:10px 13px;
+           border-left:3px solid var(--ok);display:none}
+  .explain.show{display:block}
+  .scorebar{position:fixed;bottom:0;left:0;right:0;background:rgba(23,26,35,.97);border-top:1px solid var(--line);
+            padding:10px 16px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;z-index:20}
+  .scorebar .inner{max-width:1000px;margin:0 auto;width:100%;display:flex;align-items:center;gap:12px}
+  .progress{height:6px;background:var(--chip);border-radius:6px;overflow:hidden;flex:1;margin:0 6px;max-width:320px}
+  .progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--ok));width:0;transition:.4s}
+  /* open / разбор формул */
+  .oq{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .oq .ot{font-weight:600;margin-bottom:6px}
+  .oq .ot .num{color:var(--acc);margin-right:6px}
+  .oq .ask{color:#dfe5f0}
+  .ans{margin-top:12px;background:var(--formula);border-radius:10px;padding:12px 14px;border-left:3px solid var(--acc);display:none}
+  .ans.show{display:block}
+  .ans .alabel{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+  .checklist{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  .checklist .cl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+  .checklist ul{margin:4px 0;padding-left:20px}
+  .checklist li{font-size:13px;color:#c6cfde;margin:3px 0}
+  .rate{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .rate button{border:1px solid var(--line);background:var(--chip);color:var(--txt);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px}
+  .rate button.r0:hover,.rate button.r0.on{background:var(--errbg);border-color:var(--err)}
+  .rate button.r1:hover,.rate button.r1.on{background:#3a3115;border-color:var(--warn)}
+  .rate button.r2:hover,.rate button.r2.on{background:var(--okbg);border-color:var(--ok)}
+  .ratebadge{font-size:11px;border-radius:6px;padding:1px 8px;margin-left:8px;vertical-align:middle}
+  .ratebadge.r0{background:var(--errbg);color:#ff9d9d}
+  .ratebadge.r1{background:#3a3115;color:#f3cd76}
+  .ratebadge.r2{background:var(--okbg);color:#7fe0a8}
+  /* cheat */
+  table.cheat{width:100%;border-collapse:collapse;font-size:14px}
+  table.cheat td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.cheat tr:last-child td{border-bottom:0}
+  .cheat .nm{width:26%;font-weight:600;color:#cfd6e4}
+  .cheat .fm{font-size:1.02em;overflow-x:auto}
+  .cheat .vr{display:block;color:#9aa4b2;font-size:12.5px;margin-top:6px;line-height:1.55}
+  .cheat .vr b{color:#c6cfde;font-weight:600}
+  .cheat .wh{display:block;color:#8b94a3;font-size:12px;font-style:italic;margin-top:6px}
+  .secthead{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:18px 0 8px;font-weight:600}
+  mjx-container{overflow-x:auto;overflow-y:hidden;max-width:100%}
+  @media(max-width:600px){
+    .fx{font-size:13.5px}
+    table.cheat td{display:block;border-bottom:0;padding:2px 0}
+    .cheat .nm{width:auto;color:var(--acc)}
+    table.cheat tr{display:block;border-bottom:1px solid var(--line);padding:10px 0}
+    .topicbar button .d{max-width:none}
+  }
+</style>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+  svg: { fontCache: 'global' },
+  options: { enableMenu: false },
+  startup: { typeset: false }
+};
+</script>
+<script>/*__MATHJAX__*/</script>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Машинное обучение — тренажёр <span class="sub">· подготовка к теоретическому экзамену (ОМО, ВШЭ)</span></h1>
+  <div class="sub" id="hint">Теория с объяснениями · тесты · разбор формул (открытые вопросы как в КР) · шпаргалка. Прогресс сохраняется локально в браузере.</div>
+  <div class="topicbar" id="topicbar"></div>
+  <div class="modes" id="modes"></div>
+</div></header>
+<main><div class="wrap" id="content"></div></main>
+<div class="scorebar" id="scorebar" style="display:none"><div class="inner" id="scoreinner"></div></div>
+
+<script>
+const TOPICS = /*__TOPICS__*/;
+const DATA = /*__DATA__*/;
+const MODES = [['theory','Теория'],['quiz','Тест'],['open','Разбор формул'],['cheat','Шпаргалка']];
+const RATE_LBL = ['не вспомнил','с трудом','уверенно'];
+
+const LS = {
+  get(k,def){ try{ return JSON.parse(localStorage.getItem(k)) ?? def; }catch(e){ return def; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let state = Object.assign({topic:TOPICS[0].id, mode:'theory', quizFilter:'__all', openFilter:'__all'}, LS.get('mltrain_view',{}));
+if(!DATA[state.topic]) state.topic = TOPICS[0].id;
+let quizAns = LS.get('mltrain_quiz',{});   // {topic:{i:chosen}}
+let openRate = LS.get('mltrain_open',{});   // {topic:{i:rating}}
+const saveView = ()=>LS.set('mltrain_view',{topic:state.topic,mode:state.mode});
+
+function typeset(){ if(window.MathJax && MathJax.typesetPromise){ MathJax.typesetClear && MathJax.typesetClear([document.getElementById('content')]); MathJax.typesetPromise([document.getElementById('content')]).catch(()=>{}); } }
+
+function renderTopics(){
+  document.getElementById('topicbar').innerHTML = TOPICS.map(t=>
+    `<button class="${t.id===state.topic?'active':''}" onclick="setTopic('${t.id}')">
+       <span class="t">${t.t}</span><span class="d">${t.d||''}</span></button>`).join('');
+  document.getElementById('modes').innerHTML = MODES.map(m=>
+    `<button class="${m[0]===state.mode?'active':''}" onclick="setMode('${m[0]}')">${m[1]}</button>`).join('');
+}
+function setTopic(id){ state.topic=id; saveView(); renderTopics(); render(); window.scrollTo(0,0); }
+function setMode(m){ state.mode=m; saveView(); renderTopics(); render(); window.scrollTo(0,0); }
+
+function uniqCats(arr){ const s=[]; arr.forEach(x=>{ if(x.cat && !s.includes(x.cat)) s.push(x.cat); }); return s; }
+
+function render(){
+  const d = DATA[state.topic];
+  const c = document.getElementById('content');
+  const sb = document.getElementById('scorebar');
+  let html = d.intro ? `<div class="intro">${d.intro}</div>` : '';
+  sb.style.display='none';
+  if(state.mode==='theory'){
+    html += `<div class="toolbar"><button class="btn sec" onclick="toggleAll(true)">Развернуть всё</button>
+             <button class="btn sec" onclick="toggleAll(false)">Свернуть всё</button></div>`;
+    html += d.theory.map((t,i)=>`
+      <div class="card" id="card${i}">
+        <div class="head" onclick="toggleCard(${i})"><span class="ttl">${i+1}. ${t.ttl}</span><span class="arrow">▶</span></div>
+        <div class="body">${t.body}</div>
+      </div>`).join('');
+  }
+  else if(state.mode==='quiz'){ html += quizView(d); }
+  else if(state.mode==='open'){ html += openView(d); }
+  else if(state.mode==='cheat'){ html += cheatView(d); }
+  c.innerHTML = html;
+  typeset();
+  if(state.mode==='quiz') updateScore();
+}
+
+/* ---------- THEORY ---------- */
+function toggleCard(i){ document.getElementById('card'+i).classList.toggle('open'); }
+function toggleAll(open){ document.querySelectorAll('.card').forEach(c=>c.classList.toggle('open',open)); if(open) typeset(); }
+
+/* ---------- QUIZ ---------- */
+function quizView(d){
+  const cats = uniqCats(d.quiz);
+  const chip=(k,l)=>`<button class="chip ${state.quizFilter===k?'on':''}" onclick="setQuizFilter('${k}')">${l}</button>`;
+  let bar = chip('__all','Все ('+d.quiz.length+')') + cats.map(c=>chip(c,c)).join('');
+  const idx = quizIdx(d);
+  return `<div class="filterbar">${bar}</div>
+    <div class="qhint">${idx.length} вопрос(ов). <button class="btn sec" onclick="resetQuiz()">Сбросить ответы темы</button></div>`
+    + idx.map((i,pos)=>quizHTML(d.quiz[i],i,pos)).join('');
+}
+function quizIdx(d){ return d.quiz.map((q,i)=>i).filter(i=> state.quizFilter==='__all' || d.quiz[i].cat===state.quizFilter ); }
+function setQuizFilter(k){ state.quizFilter=k; render(); }
+function quizHTML(q,i,pos){
+  const chosen = (quizAns[state.topic]||{})[i];
+  const answered = chosen!==undefined;
+  const opts = q.o.map((o,j)=>{
+    let cls='opt';
+    if(answered){ cls+=' disabled'; if(j===q.c) cls+=' correct'; else if(j===chosen) cls+=' wrong'; }
+    return `<button class="${cls}" ${answered?'':`onclick="answer(${i},${j})"`}><b class="optl">${String.fromCharCode(65+j)})</b>${o}</button>`;
+  }).join('');
+  const badge = q.cat?`<span class="catbadge">${q.cat}</span>`:'';
+  return `<div class="q" id="q${i}"><div class="qt"><span class="num">${pos+1}.</span>${q.q}${badge}</div>
+    ${opts}<div class="explain ${answered?'show':''}">${q.e?('<b>Пояснение.</b> '+q.e):''}</div></div>`;
+}
+function answer(i,j){ if(!quizAns[state.topic]) quizAns[state.topic]={}; quizAns[state.topic][i]=j; LS.set('mltrain_quiz',quizAns); render(); }
+function resetQuiz(){ quizAns[state.topic]={}; LS.set('mltrain_quiz',quizAns); render(); }
+function updateScore(){
+  const d=DATA[state.topic]; const a=quizAns[state.topic]||{};
+  const done=Object.keys(a).length; const tot=d.quiz.length;
+  const correct=Object.keys(a).filter(i=>a[i]===d.quiz[i].c).length;
+  const sb=document.getElementById('scorebar'); sb.style.display='block';
+  const pct = tot?Math.round(done/tot*100):0;
+  document.getElementById('scoreinner').innerHTML =
+    `<span>Отвечено ${done}/${tot}</span><div class="progress"><i style="width:${pct}%"></i></div>`+
+    `<span>Верно: <b style="color:var(--ok)">${correct}</b> / ${done||0}</span>`;
+}
+
+/* ---------- OPEN (Разбор формул) ---------- */
+function openView(d){
+  const cats=uniqCats(d.open);
+  const chip=(k,l)=>`<button class="chip ${state.openFilter===k?'on':''}" onclick="setOpenFilter('${k}')">${l}</button>`;
+  let bar = chip('__all','Все ('+d.open.length+')') + chip('__todo','Непройденные/трудные') + cats.map(c=>chip(c,c)).join('');
+  const idx = openIdx(d);
+  return `<div class="filterbar">${bar}</div>
+    <div class="qhint">Сначала ответь сам (вслух/на бумаге), потом раскрой эталон и честно оцени себя. ${idx.length} вопрос(ов).</div>`
+    + idx.map((i,pos)=>openHTML(d.open[i],i,pos)).join('');
+}
+function openIdx(d){
+  return d.open.map((q,i)=>i).filter(i=>{
+    const r=(openRate[state.topic]||{})[i];
+    if(state.openFilter==='__all') return true;
+    if(state.openFilter==='__todo') return r===undefined||r<2;
+    return d.open[i].cat===state.openFilter;
+  });
+}
+function setOpenFilter(k){ state.openFilter=k; render(); }
+function openHTML(q,i,pos){
+  const r=(openRate[state.topic]||{})[i];
+  const badge=q.cat?`<span class="catbadge">${q.cat}</span>`:'';
+  const rb = r!==undefined?`<span class="ratebadge r${r}">${RATE_LBL[r]}</span>`:'';
+  const cl = (q.checklist&&q.checklist.length)?`<div class="checklist"><div class="cl">Самопроверка</div><ul>${q.checklist.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:'';
+  return `<div class="oq" id="oq${i}">
+    <div class="ot"><span class="num">${pos+1}.</span><span class="ask">${q.q}</span>${badge}${rb}</div>
+    <button class="btn sec" onclick="toggleAns(${i})">Показать эталон</button>
+    <div class="ans" id="ans${i}"><div class="alabel">Эталонный ответ</div>${q.a}${cl}
+      <div class="rate">${[0,1,2].map(k=>`<button class="r${k} ${r===k?'on':''}" onclick="rateOpen(${i},${k})">${RATE_LBL[k]}</button>`).join('')}</div>
+    </div></div>`;
+}
+function toggleAns(i){ const el=document.getElementById('ans'+i); const show=!el.classList.contains('show'); el.classList.toggle('show'); if(show) typeset(); }
+function rateOpen(i,k){ if(!openRate[state.topic]) openRate[state.topic]={}; openRate[state.topic][i]=k; LS.set('mltrain_open',openRate);
+  document.querySelectorAll(`#ans${i} .rate button`).forEach((b,idx)=>b.classList.toggle('on',idx===k));
+  const ot=document.querySelector(`#oq${i} .ot`); let rb=ot.querySelector('.ratebadge'); if(!rb){ rb=document.createElement('span'); ot.appendChild(rb);} rb.className='ratebadge r'+k; rb.textContent=RATE_LBL[k];
+}
+
+/* ---------- CHEAT ---------- */
+function cheatView(d){
+  const cats=uniqCats(d.cheat);
+  let html='';
+  const groups = cats.length?cats:[''];
+  if(cats.length){
+    groups.forEach(g=>{
+      html+=`<div class="secthead">${g}</div><table class="cheat"><tbody>`;
+      d.cheat.filter(x=>x.cat===g||(!x.cat&&g==='')).forEach(x=>html+=cheatRow(x));
+      html+=`</tbody></table>`;
+    });
+  } else {
+    html+=`<table class="cheat"><tbody>`+d.cheat.map(cheatRow).join('')+`</tbody></table>`;
+  }
+  return html;
+}
+function cheatRow(x){
+  return `<tr><td class="nm">${x.name}</td><td class="fm">\\(${x.f}\\)`+
+    (x.vars?`<span class="vr">${x.vars}</span>`:'')+
+    (x.when?`<span class="wh">${x.when}</span>`:'')+`</td></tr>`;
+}
+
+renderTopics();
+render();
+</script>
+</body>
+</html>

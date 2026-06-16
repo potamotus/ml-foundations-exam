@@ -8,23 +8,24 @@ TEMPLATE = os.path.join(BASE, 'template.html')
 MATHJAX = os.path.join(BASE, 'mathjax-tex-svg.js')
 OUT = '/Users/matveytkhai/Documents/uni/ОМО/Тренажёр ОМО — Машинное обучение.html'
 
-# taxonomy order + tab titles/subtitles (must match Workflow B config)
+# taxonomy: order follows the 2026 lecture sequence; 4th field = lecture badge.
+# (lecture mapping verified against lecture titles + term frequencies in the PDFs)
 TAXO = [
-    ('intro',     'Введение в ML',            'Задачи, обозначения, обучение'),
-    ('knn',       'kNN',                      'Метрики, accuracy, переобучение, CV'),
-    ('linreg',    'Линейная регрессия',       'MSE, матрицы, аналит. решение'),
-    ('gd',        'Градиентный спуск',        'GD/SGD, шаг, останов'),
-    ('regul',     'Регуляризация',            'Ridge, LASSO, λ, отбор'),
-    ('losses',    'Отступ и потери',          'margin, суррогатные потери'),
-    ('logreg',    'Логистическая регрессия',  'Сигмоида, log-loss, вероятности'),
-    ('svm',       'SVM',                      'Зазор, hinge, hard/soft, OvA/AvA'),
-    ('metrics',   'Метрики классификации',    'Precision/Recall, F, ROC/AUC'),
-    ('trees',     'Решающие деревья',         'Энтропия/Джини, критерий'),
-    ('bagging',   'Бэггинг и лес',            'Bias-variance, бутстрап, OOB'),
-    ('boosting',  'Бустинг',                  'Сдвиги, GD в простр. функций'),
-    ('clustering','Кластеризация',            'K-means, DBSCAN, mean shift'),
-    ('dimred',    'Снижение размерности',     'Отбор признаков, PCA'),
-    ('ranking',   'Ранжирование',             'Постановка, метрики'),
+    ('intro',     'Введение в ML',            'Задачи, обозначения, обучение',      'Л1'),
+    ('knn',       'kNN',                      'Метрики, accuracy, переобучение, CV','Л2–3'),
+    ('linreg',    'Линейная регрессия',       'MSE, матрицы, аналит. решение',      'Л4–6'),
+    ('gd',        'Градиентный спуск',        'GD/SGD, шаг, останов',               'Л5–6'),
+    ('regul',     'Регуляризация',            'Ridge, LASSO, λ, отбор',             'Л5'),
+    ('losses',    'Отступ и потери',          'margin, суррогатные потери',         'Л7'),
+    ('metrics',   'Метрики классификации',    'Precision/Recall, F, ROC/AUC',       'Л8'),
+    ('logreg',    'Логистическая регрессия',  'Сигмоида, log-loss, вероятности',    'Л9'),
+    ('svm',       'SVM',                      'Зазор, hinge, hard/soft, OvA/AvA',   'Л9–10'),
+    ('trees',     'Решающие деревья',         'Энтропия/Джини, критерий',           'Л11'),
+    ('bagging',   'Бэггинг и лес',            'Bias-variance, бутстрап, OOB',       'Л12–13'),
+    ('boosting',  'Бустинг',                  'Сдвиги, GD в простр. функций',       'Л13–14'),
+    ('clustering','Кластеризация',            'K-means, DBSCAN, mean shift',        'Л14–15'),
+    ('dimred',    'Снижение размерности',     'Отбор признаков, PCA, тексты',       'Л16–17'),
+    ('ranking',   'Ранжирование',             'Постановка, метрики',                'Л17'),
 ]
 
 REQ = ['intro', 'theory', 'quiz', 'open', 'cheat']
@@ -51,7 +52,7 @@ def main():
     data = {}
     problems = []
     summary = []
-    for tid, t, d in TAXO:
+    for tid, t, d, lec in TAXO:
         path = os.path.join(TOPDIR, tid + '.json')
         if not os.path.exists(path):
             problems.append(f'ОТСУТСТВУЕТ файл темы: {tid}.json')
@@ -75,7 +76,7 @@ def main():
         problems.extend(latex_balance_warns(tid, obj))
         obj['id'] = tid
         data[tid] = obj
-        topics_meta.append({'id': tid, 't': t, 'd': d})
+        topics_meta.append({'id': tid, 't': t, 'd': d, 'l': lec})
         summary.append(f"  {tid:11} theory={len(obj['theory']):2} quiz={len(obj['quiz']):2} "
                        f"open={len(obj['open']):2} cheat={len(obj['cheat']):2}")
 

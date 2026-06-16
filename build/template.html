@@ -24,6 +24,7 @@
        border-radius:9px;padding:7px 11px;cursor:pointer;font-size:13px;text-align:left;transition:.15s}
   .topicbar button .t{font-weight:600;display:block}
   .topicbar button .d{color:var(--muted);font-size:11px;display:block;max-width:200px}
+  .topicbar button .lec{display:inline-block;font-size:10px;font-weight:700;color:var(--acc);border:1px solid var(--acc);border-radius:5px;padding:0 5px;margin-bottom:3px;letter-spacing:.3px;opacity:.8}
   .topicbar button:hover{border-color:var(--acc)}
   .topicbar button.active{border-color:var(--acc);background:linear-gradient(180deg,#1c2435,#171a23);box-shadow:0 0 0 1px var(--acc) inset}
   .modebar{position:sticky;top:0;z-index:30;background:rgba(15,17,23,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:8px 0}
@@ -181,7 +182,7 @@ function typeset(){ if(window.MathJax && MathJax.typesetPromise){ MathJax.typese
 function renderTopics(){
   document.getElementById('topicbar').innerHTML = TOPICS.map(t=>
     `<button class="${t.id===state.topic?'active':''}" onclick="setTopic('${t.id}')">
-       <span class="t">${t.t}</span><span class="d">${t.d||''}</span></button>`).join('');
+       ${t.l?`<span class="lec">${t.l}</span>`:''}<span class="t">${t.t}</span><span class="d">${t.d||''}</span></button>`).join('');
   document.getElementById('modes').innerHTML = MODES.map(m=>
     `<button class="${m[0]===state.mode?'active':''}" onclick="setMode('${m[0]}')">${m[1]}</button>`).join('');
 }
@@ -232,17 +233,22 @@ function quizView(d){
 }
 function quizIdx(d){ return d.quiz.map((q,i)=>i).filter(i=> state.quizFilter==='__all' || d.quiz[i].cat===state.quizFilter ); }
 function setQuizFilter(k){ state.quizFilter=k; render(); }
+/* '<' внутри \(...\) (напр. \(\ell<d\)) иначе парсится innerHTML как HTML-тег и
+   рвёт и текст, и MathJax. Экранируем < > ТОЛЬКО внутри математики — реальная
+   разметка (<p>, <b> в эталонах) снаружи делимитеров не трогается. */
+function mathSafe(s){ return s==null?s:String(s).replace(/\\\((?:[\s\S]*?)\\\)|\\\[(?:[\s\S]*?)\\\]/g, m=>m.replace(/</g,'&lt;').replace(/>/g,'&gt;')); }
+function escTxt(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function quizHTML(q,i,pos){
   const chosen = (quizAns[state.topic]||{})[i];
   const answered = chosen!==undefined;
   const opts = q.o.map((o,j)=>{
     let cls='opt';
     if(answered){ cls+=' disabled'; if(j===q.c) cls+=' correct'; else if(j===chosen) cls+=' wrong'; }
-    return `<button class="${cls}" ${answered?'':`onclick="answer(${i},${j})"`}><b class="optl">${String.fromCharCode(65+j)})</b>${o}</button>`;
+    return `<button class="${cls}" ${answered?'':`onclick="answer(${i},${j})"`}><b class="optl">${String.fromCharCode(65+j)})</b>${mathSafe(o)}</button>`;
   }).join('');
-  const badge = q.cat?`<span class="catbadge">${q.cat}</span>`:'';
-  return `<div class="q" id="q${i}"><div class="qt"><span class="num">${pos+1}.</span>${q.q}${badge}</div>
-    ${opts}<div class="explain ${answered?'show':''}">${q.e?('<b>Пояснение.</b> '+q.e):''}${thref(q.ref)}</div></div>`;
+  const badge = q.cat?`<span class="catbadge">${escTxt(q.cat)}</span>`:'';
+  return `<div class="q" id="q${i}"><div class="qt"><span class="num">${pos+1}.</span>${mathSafe(q.q)}${badge}</div>
+    ${opts}<div class="explain ${answered?'show':''}">${q.e?('<b>Пояснение.</b> '+mathSafe(q.e)):''}${thref(q.ref)}</div></div>`;
 }
 function answer(i,j){ if(!quizAns[state.topic]) quizAns[state.topic]={}; quizAns[state.topic][i]=j; LS.set('mltrain_quiz',quizAns); render(); }
 function resetQuiz(){ quizAns[state.topic]={}; LS.set('mltrain_quiz',quizAns); render(); }
@@ -278,13 +284,13 @@ function openIdx(d){
 function setOpenFilter(k){ state.openFilter=k; render(); }
 function openHTML(q,i,pos){
   const r=(openRate[state.topic]||{})[i];
-  const badge=q.cat?`<span class="catbadge">${q.cat}</span>`:'';
+  const badge=q.cat?`<span class="catbadge">${escTxt(q.cat)}</span>`:'';
   const rb = r!==undefined?`<span class="ratebadge r${r}">${RATE_LBL[r]}</span>`:'';
-  const cl = (q.checklist&&q.checklist.length)?`<div class="checklist"><div class="cl">Самопроверка</div><ul>${q.checklist.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:'';
+  const cl = (q.checklist&&q.checklist.length)?`<div class="checklist"><div class="cl">Самопроверка</div><ul>${q.checklist.map(x=>`<li>${mathSafe(x)}</li>`).join('')}</ul></div>`:'';
   return `<div class="oq" id="oq${i}">
-    <div class="ot"><span class="num">${pos+1}.</span><span class="ask">${q.q}</span>${badge}${rb}</div>
+    <div class="ot"><span class="num">${pos+1}.</span><span class="ask">${mathSafe(q.q)}</span>${badge}${rb}</div>
     <button class="btn sec" onclick="toggleAns(${i})">Показать эталон</button>
-    <div class="ans" id="ans${i}"><div class="alabel">Эталонный ответ</div>${q.a}${cl}${thref(q.ref)}
+    <div class="ans" id="ans${i}"><div class="alabel">Эталонный ответ</div>${mathSafe(q.a)}${cl}${thref(q.ref)}
       <div class="rate">${[0,1,2].map(k=>`<button class="r${k} ${r===k?'on':''}" onclick="rateOpen(${i},${k})">${RATE_LBL[k]}</button>`).join('')}</div>
     </div></div>`;
 }
